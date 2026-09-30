@@ -1,0 +1,24 @@
+{
+  "name": "auto-fill-kotsuhi",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "test": "node --import tsx --test \"tests/**/*.test.ts\"",
+    "typecheck": "tsc",
+    "login": "tsx scripts/login.ts",
+    "fill-kotsuhi": "tsx scripts/fill-kotsuhi.ts",
+    "fill-kotsuhi:prev": "tsx scripts/fill-kotsuhi.ts --prev"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "playwright": "^1.63.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.5.0",
+    "tsx": "^4.23.13",
+    "typescript": "^7.0.2"
+  }
+}
