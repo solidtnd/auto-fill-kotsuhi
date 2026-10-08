@@ -80,6 +80,24 @@ flowchart TD
 |---|---|
 | `npm run login` | ガルーン、楽楽精算の順にログインし直して保存する |
 | `npm run typecheck` | 型チェック |
+| `npm run capture -- <URL>` | 画面のHTMLを保存する(下記) |
+
+## 画面のHTMLを保存する(capture)
+
+AIエージェントにHTML構造を見せて、セレクタを指定したPlaywrightスクリプトを書いてもらうための補助スクリプト。
+
+1. `npm run capture -- <URL>` を実行すると、ブラウザとPlaywright Inspectorが開く。
+2. ブラウザを操作すると、クリック・入力・選択・送信・画面遷移が `actions.jsonl` に記録される。
+3. 保存したい画面でInspectorのResume(▶)を押すと、最後に操作したタブの画面が保存される。何度でも押せる。
+4. ブラウザを閉じると終了する。
+
+出力先は `capture/<実行日時>/`。
+
+| ファイル | 内容 |
+|---|---|
+| `actions.jsonl` | 1行1操作。要素のタグ・属性・テキスト・CSSセレクタの候補を含む。入力値(パスワードも含む)はそのまま記録される |
+| `NNN_<画面タイトル>.html` | Resume時点のHTML。iframeは `.frame1.html` のように別ファイルになる |
+| `NNN_<画面タイトル>.aria.txt` | ARIAスナップショット(役割と名前の一覧)。`getByRole` のセレクタを書くときに使う |
 
 ## ローカルに保存されるもの
 

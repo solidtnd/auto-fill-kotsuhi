@@ -7,7 +7,8 @@
     "typecheck": "tsc",
     "login": "tsx scripts/login.ts",
     "fill-kotsuhi": "tsx scripts/fill-kotsuhi.ts",
-    "fill-kotsuhi:prev": "tsx scripts/fill-kotsuhi.ts --prev"
+    "fill-kotsuhi:prev": "tsx scripts/fill-kotsuhi.ts --prev",
+    "capture": "tsx scripts/capture.ts"
   },
   "keywords": [],
   "author": "",

@@ -4,3 +4,4 @@ docs/
 tests/
 .env
 *.log
+capture/
