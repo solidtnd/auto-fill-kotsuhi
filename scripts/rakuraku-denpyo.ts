@@ -1,4 +1,4 @@
-import type { Dialog, Page } from 'playwright';
+import type { Page } from 'playwright';
 import type { WorkDate } from './garoon';
 
 const SEL = {
@@ -82,15 +82,9 @@ export async function copyMeisaiWithDate(page: Page, date: WorkDate): Promise<vo
   await confirmMeisai(page);
 }
 
-/** 伝票を一時保存し、完了画面に移る(伝票の編集画面から離れる)まで待つ。確認ダイアログが出たら OK を押す。 */
+/** 伝票を一時保存し、完了画面に移る(伝票の編集画面から離れる)まで待つ。 */
 export async function saveTemporarily(page: Page): Promise<void> {
-  const accept = (dialog: Dialog) => dialog.accept();
-  page.on('dialog', accept);
-  try {
-    await page.click(SEL.saveTemporarily);
-    await page.locator(SEL.addMeisai).waitFor({ state: 'detached' });
-    await page.waitForLoadState();
-  } finally {
-    page.off('dialog', accept);
-  }
+  await page.click(SEL.saveTemporarily);
+  await page.locator(SEL.addMeisai).waitFor({ state: 'detached' });
+  await page.waitForLoadState();
 }
