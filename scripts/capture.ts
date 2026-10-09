@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import inspector from 'node:inspector';
 import path from 'node:path';
 import { chromium, type Frame, type Page } from 'playwright';
 import { waitForBrowserClosed } from './browser';
@@ -28,9 +29,12 @@ export const RECORDER_SCRIPT = String.raw`(() => {
     return parts.join(' > ');
   };
 
+  const isSecret = el => el.type === 'password';
+
   const describe = el => {
     const attrs = {};
     for (const name of ATTRS) {
+      if (name === 'value' && isSecret(el)) continue;
       const value = el.getAttribute(name);
       if (value) attrs[name] = value;
     }
@@ -50,7 +54,8 @@ export const RECORDER_SCRIPT = String.raw`(() => {
     if (!(el instanceof Element)) return;
     const checkable = el.type === 'checkbox' || el.type === 'radio';
     const selectedText = el.tagName === 'SELECT' ? el.selectedOptions[0]?.text : undefined;
-    send('change', el, { value: checkable ? el.checked : el.value, selectedText });
+    const value = isSecret(el) ? '***' : checkable ? el.checked : el.value;
+    send('change', el, { value, selectedText });
   }, true);
 
   window.addEventListener('submit', e => {
@@ -96,6 +101,8 @@ export async function saveSnapshot(page: Page, outDir: string, seq: number) {
 async function main() {
   const url = process.argv[2];
   if (!url) throw new Error('使い方: npm run capture -- <URL>');
+  // デバッガ接続中はpage.pause()が即座に戻り、保存が止まらなくなる
+  if (inspector.url()) throw new Error('デバッガを接続したままでは実行できません。通常のターミナルから実行してください。');
 
   const outDir = path.join(CAPTURE_ROOT, timestamp());
   fs.mkdirSync(outDir, { recursive: true });
@@ -130,13 +137,16 @@ async function main() {
 
   for (let seq = 1; ; ) {
     const page = currentPage();
-    if (!page) break;
+    if (!page || !browser.isConnected()) break;
+    // page.pause()はタブが閉じられても例外にならず正常終了するため、閉じたかどうかを別に確かめる
     const result = await Promise.race([
-      page.pause().then(() => 'resumed' as const, () => 'pageClosed' as const),
-      new Promise<'pageClosed'>(resolve => page.once('close', () => resolve('pageClosed'))),
+      page.pause().then(
+        () => (page.isClosed() ? ('pageClosed' as const) : ('resumed' as const)),
+        () => 'pageClosed' as const,
+      ),
       browserClosed,
     ]);
-    if (result === 'closed') break;
+    if (result === 'closed' || !browser.isConnected()) break;
     const target = currentPage();
     if (result !== 'resumed' || !target) continue;
 
@@ -144,7 +154,7 @@ async function main() {
       console.error(`保存に失敗しました: ${e instanceof Error ? e.message : e}`);
       return undefined;
     });
-    if (!frames) continue;
+    if (!frames?.length) continue;
     log({ tab: pageIds.get(target), type: 'snapshot', url: target.url(), frames });
     console.log(`保存しました: ${frames.map(f => f.file).join(', ')}`);
     seq++;
